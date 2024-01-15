@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Zillow USDA Direct Checker",
-  "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when seraching homes on zillow.",
+  "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when seraching homes on zillow...",
   "version": "1.0",
   "content_scripts": [
     {

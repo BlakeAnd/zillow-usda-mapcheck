@@ -10,14 +10,14 @@
   ],
   "background": {
     "service_worker": "background.js"
-  },
+  }, 
   "content_scripts": [
     {
       "js": [
         "content.js"
       ],
       "matches": [
-        "https://www.zillow.com/"
+        "https://www.zillow.com/*"
       ]
     }
   ]

@@ -10,7 +10,134 @@ window.addEventListener('load', function () {
 
   // Select all <li> elements within this <ul>
   const listItems = document.getElementsByTagName('address');
-  let addresses_arr = setAddressesArray();
+  const priceListItems = this.document.getElementsByClassName("PropertyCardWrapper__StyledPriceLine-srp__sc-16e8gqd-1 iMKTKr");
+  let addresses_arr = [];
+  setAddressesArray();
+
+  async function updateAddressesAndDisplayTagsInitial() {
+    addresses_arr = setAddressesArray();
+    addresses_arr = await sendAllAddresses(addresses_arr);
+    createEligibilityDisplayTags(addresses_arr);
+  }
+  
+  updateAddressesAndDisplayTagsInitial();
+  
+  async function sendAllAddresses(addresses) {
+    // Use Promise.all to wait for all the sendAddress promises to resolve
+    await Promise.all(addresses.map(async (addressObj) => {
+      let server_response = await sendAddress(addressObj.url_address);
+      addressObj.USDA_response = server_response;
+    }));
+    console.log("addresses obj after response", addresses);
+    return addresses;
+  }
+  
+  function sendAddress(url_address) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: "checkEligibility",
+        address: url_address
+      }, response => {
+        if (response) {
+          let eligibility_response = JSON.parse(response.data);
+          resolve(eligibility_response);
+        } else {
+          reject(new Error("No response from server"));
+        }
+      });
+    });
+  }
+  
+  function createEligibilityDisplayTags(addresses_arr) {
+    console.log("addresses @ display func", addresses_arr, priceListItems);
+    for (let i = 0; i < priceListItems.length; i++) {
+      // Create a new span element to display the eligibility
+      let span = document.createElement('span');
+  
+      // Set the text content of the span to the eligibility information
+      // from the corresponding address in addresses_arr
+      console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
+      span.textContent = addresses_arr[i].USDA_response.eligibilityResult;
+      console.log("alleged content of span", span.textContent);
+  
+      // Append the span element to the current list item
+      priceListItems[i].appendChild(span);
+    }
+  }
+
+  // addresses_arr = setAddressesArray() ;
+  // addresses_arr = sendAllAddresses(addresses_arr);
+  // createEligibilityDisplayTags(addresses_arr)
+
+
+  // function sendAllAddresses(addresses) {
+  //   addresses.forEach(async (addressObj) => {
+  //     let server_response = await sendAddress(addressObj.url_address);
+  //     // console.log("RES", server_response);
+  //     addressObj.USDA_response = server_response;
+  //   });
+  //   console.log("addresses obj after response", addresses);
+  //   return addresses;
+  // }
+  
+  // function sendAddress(url_address) {
+  //   return new Promise((resolve, reject) => {
+  //     chrome.runtime.sendMessage({
+  //       action: "checkEligibility",
+  //       address: url_address
+  //     }, response => {
+  //       if (response) {
+  //         let eligibility_response = JSON.parse(response.data);
+  //         resolve(eligibility_response);
+  //       } else {
+  //         reject(new Error("No response from server"));
+  //       }
+  //     });
+  //   });
+  // }
+
+  // function createEligibilityDisplayTags (addresses_arr) {
+  //   console.log("addresses @ display func", addresses_arr, listItems)
+  //   for(let i = 0; i < listItems.length; i++){
+  //     // Create a new span element to display the eligibility
+  //     let span = document.createElement('span');
+
+  //     // Set the text content of the span to the eligibility information
+  //     // from the corresponding address in addresses_arr
+  //     console.log("alleged content of response", addresses_arr[i])
+  //     // span.textContent = addresses_arr[i].USDA_response.eligibilityResult;
+  //     console.log("alleged content of span", span.textContent)
+
+  //     // Append the span element to the current list item
+  //     listItems[i].appendChild(span);
+  //   }
+  // }
+
+  // function sendAllAddresses(addresses) {
+  //   for(let i = 0; i < addresses.length; i++){
+  //     let server_response = sendAddress(addresses[i].url_address);
+  //     console.log("RES", server_response)
+  //     addresses[i].USDA_response = server_response;
+  //   }
+  //   console.log("addresses obj after esponse", addresses)
+  // }
+
+  // function sendAddress(url_address){
+  //   let address = url_address; // Example, get this from your page interactions
+  //   let eligibility_response = "";
+  //   chrome.runtime.sendMessage({
+  //     action: "checkEligibility",
+  //     address: address
+  //   }, response => {
+  //     // console.log('Eligibility data:', response.data);
+  //     eligibility_response = JSON.parse(response.data);
+  //     // console.log("eligible?", eligibility_response.eligibilityResult);
+  //     // alert(response.data);
+  //     return eligibility_response;
+  //   });
+    
+  // }
+
 
   function setAddressesArray(){
     let returned_addresses_array = [];
@@ -18,15 +145,15 @@ window.addEventListener('load', function () {
     for(let i = 0; i < listItems.length; i++){
       let addresses_obj = {
         address: "",
-        address_url: ""
+        url_address: "", 
+        USDA_response: null,
       }
       addresses_obj.address = listItems[i].innerHTML;
-      addresses_obj.address_url = addresses_obj.address.replace(/ /g, "%20");
+      addresses_obj.url_address = addresses_obj.address.replace(/ /g, "%20");
       returned_addresses_array.push(addresses_obj);
     }
     return returned_addresses_array;
   }
-
   console.log("addresses", listItems, addresses_arr)
   // Loop through the <li> elements using a for loop
   for(let i = 0; i < listItems.length; i++) {
@@ -77,38 +204,28 @@ const throttledScroll = throttle(function() {
  
 
 
-  let url_start = "https://eligibility.sc.egov.usda.gov/eligibility/MapAddressVerification?address="
-  // 370%20boyer%20rd
-  let url_end = "&whichapp=RBSIELG"
-  // zillow_search_button.onclick 
-  check_eligibility();
-  function check_eligibility() {
-    // let url_search_str = search_str.replaceAll(" ", "%20");
+  // let url_start = "https://eligibility.sc.egov.usda.gov/eligibility/MapAddressVerification?address="
+  // // 370%20boyer%20rd
+  // let url_end = "&whichapp=RBSIELG"
+  // // zillow_search_button.onclick 
+  // check_eligibility();
+  // function check_eligibility() {
+  //   // let url_search_str = search_str.replaceAll(" ", "%20");
 
-    // // URL of the page you want to fetch
-    // url_search_str = "370%20boyer%20rd"
-    // const url = url_start + url_search_str + url_end;
+  //   // // URL of the page you want to fetch
+  //   // url_search_str = "370%20boyer%20rd"
+  //   // const url = url_start + url_search_str + url_end;
 
-    // console.log(url)
-    // // alert(`clicking the search ${url}`)
+  //   // console.log(url)
+  //   // // alert(`clicking the search ${url}`)
 
-    let address = "370%20boyer%20rd"; // Example, get this from your page interactions
-    let eligibility_response = "";
-    chrome.runtime.sendMessage({
-      action: "checkEligibility",
-      address: address
-    }, response => {
-      console.log('Eligibility data:', response.data);
-      eligibility_response = JSON.parse(response.data);
-      console.log("eligible?", eligibility_response.eligibilityResult);
-      // alert(response.data);
-    });
+
 
 
 
 
       
 
-  }
+  // }
 
 })

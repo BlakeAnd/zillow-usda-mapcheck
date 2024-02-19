@@ -16,8 +16,9 @@ window.addEventListener('load', function () {
 
   async function updateAddressesAndDisplayTagsInitial() {
     addresses_arr = setAddressesArray();
+    createLoadingDisplayTags(addresses_arr, 0);
     addresses_arr = await sendAllAddresses(addresses_arr);
-    createEligibilityDisplayTags(addresses_arr);
+    createEligibilityDisplayTags(addresses_arr, 0);
   }
   
   updateAddressesAndDisplayTagsInitial();
@@ -47,21 +48,57 @@ window.addEventListener('load', function () {
       });
     });
   }
-  
-  function createEligibilityDisplayTags(addresses_arr) {
-    console.log("addresses @ display func", addresses_arr, priceListItems);
-    for (let i = 0; i < priceListItems.length; i++) {
+
+  function createLoadingDisplayTags(addresses_arr, start_index) {
+    // console.log("addresses @ display func", addresses_arr.length, priceListItems.length, start_index);
+    for (let i = 0; i < addresses_arr.length; i++) {
+      // console.log(i, i + start_index)
       // Create a new span element to display the eligibility
-      let span = document.createElement('span');
+
+      if (priceListItems[i + start_index].querySelector('span') === null) {
+        console.log('The parent element has a child div element.');
+        let span = document.createElement('span');
+      
   
-      // Set the text content of the span to the eligibility information
-      // from the corresponding address in addresses_arr
-      console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
-      span.textContent = addresses_arr[i].USDA_response.eligibilityResult;
-      console.log("alleged content of span", span.textContent);
+        // Set the text content of the span to the eligibility information
+        // from the corresponding address in addresses_arr
+        // console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
+        span.textContent = "Loading...";
+        // console.log("alleged content of span", span.textContent);
+        span.style.color = "white"
+        span.style.fontSize = "12px"
+        span.style.backgroundColor = "grey"
+        span.style.marginLeft = "10px"
+        span.style.padding = "2px 5px 2px 5px"
+        span.style.borderRadius = "3px"
+
+    
+        // Append the span element to the current list item
+        // console.log("end of list items..", priceListItems[i + start_index])
+        priceListItems[i + start_index].appendChild(span);
+      }
+
+    }
+  }
   
-      // Append the span element to the current list item
-      priceListItems[i].appendChild(span);
+  function createEligibilityDisplayTags(addresses_arr, start_index) {
+    console.log("addresses @ display func", addresses_arr.length, priceListItems.length, start_index);
+    for (let i = 0; i < addresses_arr.length; i++) {
+      console.log(i, i + start_index)
+      // Create a new span element to display the eligibility
+      let span = priceListItems[i + start_index].querySelector('span');
+
+      if (span) {
+        // Set the text content of the span to the eligibility information
+        console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
+        span.textContent = addresses_arr[i].USDA_response.eligibilityResult;
+        console.log("alleged content of span", span.textContent);
+        // Update the background color based on the eligibility result
+        span.style.backgroundColor = addresses_arr[i].USDA_response.eligibilityResult === "Eligible" ? "green" : "red";
+        console.log("end of list items..", priceListItems[i + start_index]);
+      }
+      // }
+
     }
   }
 
@@ -184,12 +221,27 @@ window.addEventListener('load', function () {
 
 
 const throttledScroll = throttle(function() {
-    console.log('Throttled scroll event triggered', listItems);
-    let old_array_length = addresses_arr.length;
-    addresses_arr = setAddressesArray();
-    let newly_loaded_arr = addresses_arr.slice(old_array_length)
+    // console.log('Throttled scroll event triggered', listItems);
+    // let old_array_length = addresses_arr.length;
+    // addresses_arr = setAddressesArray();
+    // let newly_loaded_arr = addresses_arr.slice(old_array_length)
+    updateAddressesAndDisplayScroll()
     
 }, 200); // Trigger at most once every 200ms (1/5th of a second)
+
+async function updateAddressesAndDisplayScroll() {
+  let old_array_length = addresses_arr.length;
+  let new_array = setAddressesArray(); //array for slicing
+  if(new_array.length > old_array_length){
+    let sliced_array = new_array.slice(old_array_length)
+    // console.log("THE ARRAYS", addresses_arr, new_array, sliced_array)
+    createLoadingDisplayTags(sliced_array, old_array_length);
+    sliced_array = await sendAllAddresses(sliced_array);
+    // console.log("SLICE RESPONSE", sliced_array, addresses_arr.concat(sliced_array));
+    addresses_arr.concat(sliced_array);
+    createEligibilityDisplayTags(sliced_array, old_array_length);
+  }
+}
 
 // window.addEventListener('scroll', throttledScroll);
 

@@ -4,9 +4,11 @@ https://developer.chrome.com/docs/extensions/reference/manifest#inject-a-content
 
 Next Steps:
 **Important** 
+0) check if using right data source, ask jacob
+00) change from scroll fire to button for each property? to prevent overloading the USDA server
 1) set up function to fire on scroll, compare arrays etc. 
 LOGIC
-initially
+initially [implemented]
 * set_addresses
 * send_addresses(all)
 

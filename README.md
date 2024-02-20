@@ -4,8 +4,6 @@ https://developer.chrome.com/docs/extensions/reference/manifest#inject-a-content
 
 Next Steps:
 **Important** 
-0) check if using right data source, ask jacob
-00) change from scroll fire to button for each property? to prevent overloading the USDA server
 1) set up function to fire on scroll, compare arrays etc. 
 LOGIC
 initially [implemented]
@@ -21,7 +19,7 @@ scrolling
 
 2) change program start condition from refresh/load (page does not refresh when new search is made so pluign does not get fired rn), to click of search suggestion element or pressing of enter key (keep refresh as well just to safe, just add the other ones on)
 
-3) Style Eligibility Tags
+3) set up localstorage for addresses that have been sent to server and returned, so that data can persist after refresh
 
 **Other**
 

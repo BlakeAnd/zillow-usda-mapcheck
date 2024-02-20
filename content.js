@@ -17,20 +17,21 @@ window.addEventListener('load', function () {
   async function updateAddressesAndDisplayTagsInitial() {
     addresses_arr = setAddressesArray();
     createLoadingDisplayTags(addresses_arr, 0);
-    addresses_arr = await sendAllAddresses(addresses_arr);
-    createEligibilityDisplayTags(addresses_arr, 0);
+    // addresses_arr = await 
+    // sendAllAddresses(addresses_arr, 0);
+    // createEligibilityDisplayTags(addresses_arr, 0);
   }
   
   updateAddressesAndDisplayTagsInitial();
   
-  async function sendAllAddresses(addresses) {
-    // Use Promise.all to wait for all the sendAddress promises to resolve
-    await Promise.all(addresses.map(async (addressObj) => {
-      let server_response = await sendAddress(addressObj.url_address);
-      addressObj.USDA_response = server_response;
-    }));
-    console.log("addresses obj after response", addresses);
-    return addresses;
+  async function sendAllAddresses(addresses, start_index) {
+    for (let i = 0; i < addresses.length; i++) {
+      let server_response = await sendAddress(addresses[i].url_address);
+      addresses[i].USDA_response = server_response;
+  
+      // Update the display for the current address
+      createEligibilityDisplayTag(addresses[i], i + start_index);
+    }
   }
   
   function sendAddress(url_address) {
@@ -63,7 +64,7 @@ window.addEventListener('load', function () {
         // Set the text content of the span to the eligibility information
         // from the corresponding address in addresses_arr
         // console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
-        span.textContent = "Loading...";
+        span.textContent = "Check Eligibility";
         // console.log("alleged content of span", span.textContent);
         span.style.color = "white"
         span.style.fontSize = "12px"
@@ -76,104 +77,29 @@ window.addEventListener('load', function () {
         // Append the span element to the current list item
         // console.log("end of list items..", priceListItems[i + start_index])
         priceListItems[i + start_index].appendChild(span);
+
+        span.addEventListener("click", (event) => {
+          span.textContent = "Loading..."
+          event.stopPropagation();
+          sendAllAddresses([addresses_arr[i]], i + start_index);
+        });
+        
       }
 
     }
   }
   
-  function createEligibilityDisplayTags(addresses_arr, start_index) {
-    console.log("addresses @ display func", addresses_arr.length, priceListItems.length, start_index);
-    for (let i = 0; i < addresses_arr.length; i++) {
-      console.log(i, i + start_index)
-      // Create a new span element to display the eligibility
-      let span = priceListItems[i + start_index].querySelector('span');
+  function createEligibilityDisplayTag(address_object, index) {
+    let span = priceListItems[index].querySelector('span');
+    console.log(span)
 
-      if (span) {
-        // Set the text content of the span to the eligibility information
-        console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
-        span.textContent = addresses_arr[i].USDA_response.eligibilityResult;
-        console.log("alleged content of span", span.textContent);
-        // Update the background color based on the eligibility result
-        span.style.backgroundColor = addresses_arr[i].USDA_response.eligibilityResult === "Eligible" ? "green" : "red";
-        console.log("end of list items..", priceListItems[i + start_index]);
-      }
-      // }
-
+    if (span) {
+      span.textContent = address_object.USDA_response.eligibilityResult;
+      span.style.backgroundColor = address_object.USDA_response.eligibilityResult === "Eligible" ? "green" : "red";
     }
   }
 
-  // addresses_arr = setAddressesArray() ;
-  // addresses_arr = sendAllAddresses(addresses_arr);
-  // createEligibilityDisplayTags(addresses_arr)
 
-
-  // function sendAllAddresses(addresses) {
-  //   addresses.forEach(async (addressObj) => {
-  //     let server_response = await sendAddress(addressObj.url_address);
-  //     // console.log("RES", server_response);
-  //     addressObj.USDA_response = server_response;
-  //   });
-  //   console.log("addresses obj after response", addresses);
-  //   return addresses;
-  // }
-  
-  // function sendAddress(url_address) {
-  //   return new Promise((resolve, reject) => {
-  //     chrome.runtime.sendMessage({
-  //       action: "checkEligibility",
-  //       address: url_address
-  //     }, response => {
-  //       if (response) {
-  //         let eligibility_response = JSON.parse(response.data);
-  //         resolve(eligibility_response);
-  //       } else {
-  //         reject(new Error("No response from server"));
-  //       }
-  //     });
-  //   });
-  // }
-
-  // function createEligibilityDisplayTags (addresses_arr) {
-  //   console.log("addresses @ display func", addresses_arr, listItems)
-  //   for(let i = 0; i < listItems.length; i++){
-  //     // Create a new span element to display the eligibility
-  //     let span = document.createElement('span');
-
-  //     // Set the text content of the span to the eligibility information
-  //     // from the corresponding address in addresses_arr
-  //     console.log("alleged content of response", addresses_arr[i])
-  //     // span.textContent = addresses_arr[i].USDA_response.eligibilityResult;
-  //     console.log("alleged content of span", span.textContent)
-
-  //     // Append the span element to the current list item
-  //     listItems[i].appendChild(span);
-  //   }
-  // }
-
-  // function sendAllAddresses(addresses) {
-  //   for(let i = 0; i < addresses.length; i++){
-  //     let server_response = sendAddress(addresses[i].url_address);
-  //     console.log("RES", server_response)
-  //     addresses[i].USDA_response = server_response;
-  //   }
-  //   console.log("addresses obj after esponse", addresses)
-  // }
-
-  // function sendAddress(url_address){
-  //   let address = url_address; // Example, get this from your page interactions
-  //   let eligibility_response = "";
-  //   chrome.runtime.sendMessage({
-  //     action: "checkEligibility",
-  //     address: address
-  //   }, response => {
-  //     // console.log('Eligibility data:', response.data);
-  //     eligibility_response = JSON.parse(response.data);
-  //     // console.log("eligible?", eligibility_response.eligibilityResult);
-  //     // alert(response.data);
-  //     return eligibility_response;
-  //   });
-    
-  // }
 
 
   function setAddressesArray(){
@@ -236,10 +162,13 @@ async function updateAddressesAndDisplayScroll() {
     let sliced_array = new_array.slice(old_array_length)
     // console.log("THE ARRAYS", addresses_arr, new_array, sliced_array)
     createLoadingDisplayTags(sliced_array, old_array_length);
-    sliced_array = await sendAllAddresses(sliced_array);
+    // sliced_array = await 
+
+    // sendAllAddresses(sliced_array, old_array_length);
+
     // console.log("SLICE RESPONSE", sliced_array, addresses_arr.concat(sliced_array));
     addresses_arr.concat(sliced_array);
-    createEligibilityDisplayTags(sliced_array, old_array_length);
+    // createEligibilityDisplayTags(sliced_array, old_array_length);
   }
 }
 

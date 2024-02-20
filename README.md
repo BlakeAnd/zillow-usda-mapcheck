@@ -28,8 +28,10 @@ Add price filter suggestor feature
 * highlight price built in price filter with color so user notices it
 * display text explaining price county of current search parameter 
 * create switch/button that activates/deactivates autofill from plugin data for every search
-* figure if zillow is displaying counties in a useable way (just checked and found a county tag at the bottom of the page that does not update until the page refreshes, would require force refresh to use...)
-  *contact zillow to report as bug?
+* use county data returned by USDA to set price, maybe display it as well?
 * ask jacob for relvant pdf, set up way for Jacob to update prices as they change (contact USDA and see if they want to help update?)
 
+
+*IRELEVANT TO PROJECT BUT TRIED TO figure if zillow is displaying counties in a useable way (just checked and found a county tag at the bottom of the page that does not update until the page refreshes, would require force refresh to use...)
+  *contact zillow to report as bug?
 

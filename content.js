@@ -27,7 +27,7 @@ window.addEventListener('load', function () {
   async function sendAllAddresses(addresses, start_index) {
     for (let i = 0; i < addresses.length; i++) {
       let server_response = await sendAddress(addresses[i].url_address);
-      addresses[i].USDA_response = server_response;
+      addresses[i].USDA_response = server_response;console.log(server_response)
   
       // Update the display for the current address
       createEligibilityDisplayTag(addresses[i], i + start_index);

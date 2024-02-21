@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Zillow USDA Direct Checker",
-  "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when seraching homes on zillow...",
+  "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when searching homes on Zillow...",
   "version": "1.0",
   "permissions": [
+    "webRequest"
   ],
   "host_permissions": [
-    "https://eligibility.sc.egov.usda.gov/*"
+    "https://eligibility.sc.egov.usda.gov/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
-  }, 
+  },
   "content_scripts": [
     {
       "js": [

@@ -11,3 +11,16 @@ chrome.runtime.onMessage.addListener(
     }
   }
 );
+
+let lastFrameId = -1;
+
+chrome.webRequest.onBeforeRequest.addListener(
+  details => {
+      if (details.initiator === "https://www.zillow.com" && details.frameId > lastFrameId) {
+          console.log("GONNA SEND THE MESSAGE TO CONTENT");
+          chrome.tabs.sendMessage(details.tabId, {action: "triggerMain"});
+          lastFrameId = details.frameId;
+      }
+  },
+  { urls: ['<all_urls>'] }
+);

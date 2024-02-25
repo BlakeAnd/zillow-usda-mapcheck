@@ -1,97 +1,202 @@
 window.addEventListener('load', function () {
-getEventElement();   
- main();
+// getEventElement(); 
+  // observing();  
+  main();
 })
 
-
-
-// Add the click event listener to the search box
-function getEventElement () {
-  let search_box = document.getElementsByClassName("StyledFormControl-c11n-8-84-3__sc-18qgis1-0 iUiTrf Input-c11n-8-84-3__sc-4ry0fw-0 cevglR");
-  search_box = search_box[0];
-  console.log(search_box)
-  if (search_box){
-    // search_box.addEventListener('click', function(event) {
-    //   clickedSearchSuggestion(event, search_box);
-    // });
-
-    search_box.addEventListener('click', (event) => clickedSearchSuggestion(event, search_box));
-    
-    document.addEventListener('keydown', (event) => enteredSearch(event, search_box))
-  }
-}
-
-function enteredSearch (event, search_box) {
-  console.log("enter key", event.key)
-  // let search_box = document.getElementsByClassName("StyledFormControl-c11n-8-84-3__sc-18qgis1-0 iUiTrf Input-c11n-8-84-3__sc-4ry0fw-0 cevglR")[0]; // Access the first element
-  if (event.key === 'Enter' && document.activeElement === search_box) {
-    awaitChanges();
-  }
-}
-
-function clickedSearchSuggestion(event, parentElement) {
-  console.log("clicked!")
-  const clickedElement = event.target; // The actual element that was clicked
-  if (clickedElement !== parentElement) { // Check if the click was not directly on the parent
-    awaitChanges(); // Call your main function
-  }
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  if (request.action === "triggerMain") {
-      console.log("MESSAGE")
-      main(); // Call the main() function
-  }
-});
-
-function awaitChanges() {
-  const parentSelector = '#grid-search-results'
-  // '.List-c11n-8-84-3__sc-1smrmqp-0 StyledSearchListWrapper-srp__sc-1ieen0c-0 doa-doM gKnRas photo-cards photo-cards_extra-attribution';
-  let parentElement = document.querySelector(parentSelector);
-
-  const intervalId = setInterval(() => {
-
-
-      parentElement = document.querySelector(parentSelector);
-      console.log("INTERAVL FIRE")
-      console.log(parentElement)
-      if (parentElement) {
-          clearInterval(intervalId); // Stop the interval once the parent element is found
-          // main()
-          setupMutationObserver(parentElement); // Set up the MutationObserver
-      }
-  }, 500); // Check every 1/2 second
-}
-
-function setupMutationObserver(parentElement) {
-  const observer = new MutationObserver((mutationsList, observer) => {
-      for (const mutation of mutationsList) {
-          if (mutation.type === 'childList') {
-              const addressesAdded = Array.from(mutation.addedNodes).some(node => node.tagName === 'LI');
-              if (addressesAdded) {
-                  observer.disconnect(); // Stop observing for mutations
-                  main(); // Call your main function
-              }
-          }
-      }
-  });
-
-  observer.observe(parentElement, { childList: true, subtree: true });
-}
-
-
-  // let zillow_search_box = document.getElementsByClassName("StyledFormControl-c11n-8-86-1__sc-18qgis1-0 DA-dAx Input-c11n-8-86-1__sc-4ry0fw-0 hxjfkY")[0];
+//   // let zillow_search_box = document.getElementsByClassName("StyledFormControl-c11n-8-86-1__sc-18qgis1-0 DA-dAx Input-c11n-8-86-1__sc-4ry0fw-0 hxjfkY")[0];
 function main () {
+
+  document.addEventListener("click", (event) => {
+    checkURL();
+  })
+
+  function checkURL() {
+    const intervalId = setInterval(function() {
+      if (window.location.href.includes("https://www.zillow.com/homedetails/")) {
+        console.log("URL found");
+        createDetailsButton();
+        awaitDetailsContent();
+        clearInterval(intervalId); // Clear the interval once the elements are found
+      }
+    }, 333); // Fires 3 times per second
+    
+    // Set a timeout to clear the interval after 8 seconds
+    setTimeout(() => {
+      clearInterval(intervalId);
+    }, 8000);
+  }
+
+  function awaitDetailsContent() {
+    console.log("new url detected")
+    const intervalId = setInterval(function() {
+      if (document.getElementsByClassName('fjZZmz').length > 0) {
+        console.log("DETAILS LOADED");
+        clearInterval(intervalId); // Clear the interval once the elements are found
+      }
+    }, 333); // Fires 3 times per second
+    
+    // Set a timeout to clear the interval after 8 seconds
+    setTimeout(() => {
+      clearInterval(intervalId);
+    }, 8000); // 8000 milliseconds = 8 seconds// Fires 3 times per second
+  }
+
+  function createObserver(element, elementName) {
+    console.log("sources of mut", document.getElementsByClassName('home-detail-lightbox-container')[0], document.getElementById('grid-search-results'))
+    // Create a callback function that has access to elementName
+    const callback = function(mutationsList, observer) {
+        for (const mutation of mutationsList) {
+            console.log(`Mutation observed in ${elementName}:`, mutation.target.id);
+            if(elementName === "propertiesGrid"){
+              startAll();
+            }
+            else if(elementName === "individualInfoPage"){
+              console.log("INFO MUTATED MOFO")
+              // createDetailsButton();
+            }
+        }
+        
+    };
+
+    // Create an instance of MutationObserver with the callback function
+    const observer = new MutationObserver(callback);
+
+    // Define what to observe
+    const config = { attributes: true, childList: true, subtree: true };
+
+    // Start observing the element
+    observer.observe(element, config);
+}
+
+const individualInfoPage = document.getElementsByClassName('search-detail-lightbox')[0];
+const propertiesGrid = document.getElementById('grid-search-results');
+
+// Create and start observers for each element
+if (individualInfoPage) {
+    createObserver(individualInfoPage, 'individualInfoPage');
+}
+
+if (propertiesGrid) {
+    createObserver(propertiesGrid, 'propertiesGrid');
+}
+
+function createDetailsButton() {
+  const intervalId = setInterval(function() {
+    let deets_button = document.getElementsByClassName("deets_button");
+    console.log("empty button", deets_button);
+    if (deets_button.length === 0) {
+      let price_span = document.getElementsByClassName("Text-c11n-8-99-3__sc-aiai24-0 Price__StyledHeading-fs-hdp__sc-1me8eh6-0 iDpxGV fbhNY")[0];
+      console.log("price span", price_span);
+      if (price_span) {
+        let span = document.createElement('span');
+        span.textContent = "Check Eligibility";
+        span = setButtonStyle(span);
+        span.setAttribute('class', 'deets_button');
+        console.log("span to add", span);
+
+        price_span.appendChild(span);
+        
+        span.addEventListener("click", (event) => {
+          span.textContent = "Loading...";
+          event.stopPropagation();
+          // sendAllAddresses();
+          sendDetailsAddress();
+        });
+
+        clearInterval(intervalId); // Stop checking once the button is created
+      }
+    }
+  }, 333); // Fires 3 times per second
+
+  // Set a timeout to clear the interval after 8 seconds
+  setTimeout(() => {
+    clearInterval(intervalId);
+  }, 8000);
+}
+
+  
+
+async function sendDetailsAddress () {
+  let deets_obj = {
+      address: "",
+      url_address: "", 
+      USDA_response: null,
+  }
+  deets_obj.address = document.querySelectorAll('.hiPLdz h1')[0].innerText;
+  // Replace non-breaking spaces with regular spaces
+  deets_obj.address = deets_obj.address.replace(/\u00A0/g, " ");
+  // Encode spaces for URL
+  deets_obj.url_address = deets_obj.address.replace(/ /g, "%20");
+  console.log("url address", deets_obj.url_address);
+  let details_response = await sendAddress(deets_obj.url_address);
+  
+  // localStorage.setItem('deet', 'Obaseki Nosa');
+
+  deets_obj.USDA_response = details_response;
+
+  createDetailsEligibility(deets_obj);
+
+  // Update the display for the current address
+  // createEligibilityDisplayTag(addresses[i], i + start_index);
+}
+
+function createDetailsEligibility (obj){
+  let span = document.querySelector(".deets_button")
+  console.log("deets eligibility func", span, obj)
+
+  if (span) {
+    span.textContent = obj.USDA_response.eligibilityResult;
+    span.style.backgroundColor = obj.USDA_response.eligibilityResult === "Eligible" ? "green" : "red";
+  }
+}
+
+  function setButtonStyle (span) {
+    span.style.color = "white"
+    span.style.fontSize = "12px"
+    span.style.backgroundColor = "grey"
+    span.style.marginLeft = "10px"
+    span.style.padding = "2px 5px 2px 5px"
+    span.style.borderRadius = "3px"
+    span.style.cursor = "pointer"
+    span.border = "1px solid black"
+
+    return span;
+  }
+  
+  // Set the text content of the span to the eligibility information
+  // from the corresponding address in addresses_arr
+  ////console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
+
+
+
+  // Append the span element to the current list item
+  ////console.log("end of list items..", priceListItems[i + start_index])
+ 
+
+
 
   // // Select the specific <ul>
   // const propertiesList = document.querySelector('.List-c11n-8-84-3__sc-1smrmqp-0'); // StyledSearchListWrapper-srp__sc-1ieen0c-0 doa-doM gKnRas photo-cards photo-cards_extra-attribution
 
   // console.log("BEEP BOOP PROGRAM ACTIVATED", propertiesList);
 
+  let is_initial_call = true;
 
+  function startAll () {
+    if(is_initial_call === true){
+      is_initial_call = false
+      // updateAddressesAndDisplayTagsInitial();
+    }
+    else{
+      updateAddressesAndDisplayScroll();
+    }
+  }
   // Select all <li> elements within this <ul>
-  const listItems = document.getElementsByTagName('address');
-  const priceListItems = this.document.getElementsByClassName("PropertyCardWrapper__StyledPriceLine-srp__sc-16e8gqd-1 iMKTKr");
+  // const list = document.getElementsByClassName(".PropertyCardWrapper__StyledPriceLine-srp__sc-16e8gqd-1.iMKTKr")
+  let listItems = document.querySelectorAll('.ListItem-c11n-8-84-3__sc-10e22w8-0 address');
+  console.log("lisItems", listItems)
+  const priceListItems = document.getElementsByClassName("PropertyCardWrapper__StyledPriceLine-srp__sc-16e8gqd-1 iMKTKr");
   // //console.log("ADDRESS LIST", listItems[0]);
   let addresses_arr = [];
   setAddressesArray();
@@ -172,23 +277,30 @@ function main () {
   }
   
   function createEligibilityDisplayTag(address_object, index) {
-    // console.log("USDA RESULT", address_object.eligibilityResult)
-    // for(let i = 0; i < listItems.length; i ++){
-
-    // }
-    let span = priceListItems[index].querySelector('span');
-   //console.log(span)
-
-    if (span) {
-      span.textContent = address_object.USDA_response.eligibilityResult;
-      span.style.backgroundColor = address_object.USDA_response.eligibilityResult === "Eligible" ? "green" : "red";
+    // console.log("USDA RESULT", address_object.USDA_response, listItems[index])
+    for(let i = 0; i < addresses_arr.length; i ++){
+      let USDA_address = address_object.address;
+      let zillow_address = listItems[i].textContent;
+      console.log("TO COMPARE", USDA_address, zillow_address)
+      if(zillow_address === USDA_address){
+        let span = priceListItems[i].querySelector('span');
+        //console.log(span)
+     
+         if (span) {
+           span.textContent = address_object.USDA_response.eligibilityResult;
+           span.style.backgroundColor = address_object.USDA_response.eligibilityResult === "Eligible" ? "green" : "red";
+         }
+         break;
+      }
     }
+
   }
 
 
 
 
   function setAddressesArray(){
+  listItems = document.querySelectorAll('.ListItem-c11n-8-84-3__sc-10e22w8-0 address');
     let returned_addresses_array = [];
    //console.log("length of list", listItems.length)
     for(let i = 0; i < listItems.length; i++){
@@ -205,9 +317,9 @@ function main () {
   }
  //console.log("addresses", listItems, addresses_arr)
   // Loop through the <li> elements using a for loop
-  for(let i = 0; i < listItems.length; i++) {
-     //console.log("woot", i, listItems[i].innerHTML); // Or any operation you want to perform
-  }
+  // for(let i = 0; i < listItems.length; i++) {
+  //    //console.log("woot", i, listItems[i].innerHTML); // Or any operation you want to perform
+  // }
 
 
   function throttle(func, limit) {
@@ -237,7 +349,9 @@ const throttledScroll = throttle(function() {
     // let old_array_length = addresses_arr.length;
     // addresses_arr = setAddressesArray();
     // let newly_loaded_arr = addresses_arr.slice(old_array_length)
-    updateAddressesAndDisplayScroll()
+
+
+    // updateAddressesAndDisplayScroll()
     
 }, 200); // Trigger at most once every 200ms (1/5th of a second)
 
@@ -264,7 +378,10 @@ async function updateAddressesAndDisplayScroll() {
   const scrollArea = document.querySelector('#search-page-list-container')
  //console.log("where it scrolls", scrollArea)
 
+ if(scrollArea){
   scrollArea.addEventListener('scroll', throttledScroll);
+ }
+
   // function() {
   //   // Your function code here
   //  //console.log('Properties being scrolled');

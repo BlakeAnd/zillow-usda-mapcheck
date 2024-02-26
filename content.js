@@ -97,20 +97,23 @@ function createDetailsButton() {
         span.setAttribute('class', "deets_button");
 
         let stored_obj = JSON.parse(localStorage.getItem(`${deets_obj.address}`));
+
         if(stored_obj){
-          createDetailsEligibility(stored_obj)
+          let stored_date = new Date(stored_obj.time_updated)
+          let under_week_old = isLessThanAWeekOld(stored_date)
+          if(under_week_old){
+            createDetailsEligibility(stored_obj)
+          }
+          else{
+            stored_obj.time_updated = new Date();
+            localStorage.setItem(`${stored_obj.address}`, JSON.stringify(stored_obj))
+            makeDetailsPageButton(span, deets_obj)
+          }
         }
         else{
-          span = setButtonStyle(span)
-          span.textContent = "Check Eligibility";
-
-          span.addEventListener("click", (event) => {
-            span.textContent = "Loading...";
-            event.stopPropagation();
-            createDetailsObject(deets_obj);
-          });
-          console.log("Button added");
+          makeDetailsPageButton(span, deets_obj)
         }
+
       }
 
       clearInterval(intervalId); // Stop checking once the button is created
@@ -121,6 +124,19 @@ function createDetailsButton() {
   setTimeout(() => {
     clearInterval(intervalId);
   }, 8000);
+}
+
+function makeDetailsPageButton (span, deets_obj) {
+
+  span = setButtonStyle(span)
+  span.textContent = "Check Eligibility";
+
+  span.addEventListener("click", (event) => {
+    span.textContent = "Loading...";
+    event.stopPropagation();
+    createDetailsObject(deets_obj);
+  });
+  console.log("Button added");
 }
 
 function basicSpanStyling (span) {
@@ -151,23 +167,36 @@ function createLoadingDisplayTags(addresses_arr) {
         let stored_address = JSON.parse(localStorage.getItem(`${addresses_arr[i].address}`));
 
         if(stored_address){
-          createEligibilityDisplayTag(stored_address)
+          let stored_date = new Date(stored_address.time_updated)
+          let under_week_old = isLessThanAWeekOld(stored_date)
+          if(under_week_old){
+            createEligibilityDisplayTag(stored_address)
+          }
+          else{
+            stored_address.time_updated = new Date();
+            localStorage.setItem(`${stored_address.address}`, JSON.stringify(stored_address))
+            makeListButton(span, i)
+          }
         }
         else{
-          span = setButtonStyle(span)
-          span.textContent = "Check Eligibility";
-  
-    
-    
-          span.addEventListener("click", (event) => {
-            span.textContent = "Loading..."
-            event.stopPropagation();
-            sendAllAddresses([addresses_arr[i]], i);
-          });
+          makeListButton(span, i)
         }
       }
 
+
   }
+}
+
+function makeListButton (span, i) {
+
+  span = setButtonStyle(span)
+  span.textContent = "Check Eligibility";
+
+  span.addEventListener("click", (event) => {
+    span.textContent = "Loading..."
+    event.stopPropagation();
+    sendAllAddresses([addresses_arr[i]], i);
+  });
 }
 
 function addCheckButton (relevant_element) {
@@ -180,12 +209,31 @@ function addCheckButton (relevant_element) {
   return span;
 }
 
+function isLessThanAWeekOld(stored_date) {
+  // const givenDate = new Date(dateString);
+  const currentDate = new Date();
+  const differenceInDays = (currentDate - stored_date) / (1000 * 60 * 60 * 24);
+  console.log("week old", stored_date, currentDate, differenceInDays)
+
+  if (differenceInDays < 7) {
+    console.log("The date is less than a week old.");
+    // You can fire your function here
+    return true;
+  } else {
+    console.log("The date is past the last week.");
+    return false;
+  }
+}
+
+// Example usage
+;
 
 function createObjWithAddressValues(address_element_text){
   let obj = {
     address: "",
     url_address: "", 
     USDA_response: null,
+    time_updated: "",
   }
 
   obj.address = address_element_text;
@@ -193,7 +241,12 @@ function createObjWithAddressValues(address_element_text){
   obj.address = obj.address.replace(/\u00A0/g, " ");
   // Encode spaces for URL
   obj.url_address = obj.address.replace(/ /g, "%20");
-  
+
+  let date = new Date();
+
+  obj.time_updated = date.toISOString();
+ 
+  console.log("the obj", obj)
   return obj;
 }
 

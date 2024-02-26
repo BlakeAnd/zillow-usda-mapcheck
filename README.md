@@ -4,6 +4,9 @@ https://developer.chrome.com/docs/extensions/reference/manifest#inject-a-content
 
 Next Steps:
 **Important** 
+00) add eligibility display tags to fav page, maybe buttons, set initial function to run for details page as well as properties list, then run approporiate function for page
+
+0) change tag adding logic from appending slices to traversing whole array and checking for what is empty, this will probably simplify the general structure as well as fix issues with zillows random page reload(does not actually refresh opage just changes properties displayed at the top of the page randomly when scrolling from top to bottom and back) which is removing tags/button from some components 
 1) set up function to fire on scroll, compare arrays etc. 
 LOGIC
 initially [implemented]

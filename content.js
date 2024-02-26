@@ -83,29 +83,37 @@ if (propertiesGrid) {
 
 function createDetailsButton() {
   const intervalId = setInterval(function() {
-    let deets_button = document.getElementsByClassName("deets_button");
-    console.log("empty button", deets_button);
-    if (deets_button.length === 0) {
-      let price_span = document.getElementsByClassName("Text-c11n-8-99-3__sc-aiai24-0 Price__StyledHeading-fs-hdp__sc-1me8eh6-0 iDpxGV fbhNY")[0];
-      console.log("price span", price_span);
-      if (price_span) {
+    let price_span = document.getElementsByClassName("Text-c11n-8-99-3__sc-aiai24-0 Price__StyledHeading-fs-hdp__sc-1me8eh6-0 iDpxGV fbhNY")[0];
+
+    if (price_span) {
+      let deets_obj = createObjWithAddressValues(document.querySelectorAll('.hiPLdz h1')[0].innerText)
+
+
+      if(price_span.getElementsByClassName("deets_button").length === 0){
         let span = document.createElement('span');
-        span.textContent = "Check Eligibility";
-        span = setButtonStyle(span);
-        span.setAttribute('class', 'deets_button');
-        console.log("span to add", span);
 
         price_span.appendChild(span);
-        
-        span.addEventListener("click", (event) => {
-          span.textContent = "Loading...";
-          event.stopPropagation();
-          // sendAllAddresses();
-          sendDetailsAddress();
-        });
+        span = basicSpanStyling(span)
+        span.setAttribute('class', "deets_button");
 
-        clearInterval(intervalId); // Stop checking once the button is created
+        let stored_obj = JSON.parse(localStorage.getItem(`${deets_obj.address}`));
+        if(stored_obj){
+          createDetailsEligibility(stored_obj)
+        }
+        else{
+          span = setButtonStyle(span)
+          span.textContent = "Check Eligibility";
+
+          span.addEventListener("click", (event) => {
+            span.textContent = "Loading...";
+            event.stopPropagation();
+            createDetailsObject(deets_obj);
+          });
+          console.log("Button added");
+        }
       }
+
+      clearInterval(intervalId); // Stop checking once the button is created
     }
   }, 333); // Fires 3 times per second
 
@@ -115,35 +123,100 @@ function createDetailsButton() {
   }, 8000);
 }
 
-  
+function basicSpanStyling (span) {
+  span.style.fontSize = "12px"
+  span.style.padding = "2px 5px 2px 5px"
+  span.style.marginLeft = "10px"
+  span.style.color = "white"
+  span.style.borderRadius = "4px"
+  return span;
+}
 
-async function sendDetailsAddress () {
-  let deets_obj = {
-      address: "",
-      url_address: "", 
-      USDA_response: null,
+function createLoadingDisplayTags(addresses_arr) {
+  // //console.log("addresses @ display func", addresses_arr.length, priceListItems.length, start_index);
+  for (let i = 0; i < addresses_arr.length; i++) {
+    // //console.log(i, i + start_index)
+    // Create a new span element to display the eligibility
+    // console.log("cuurent addddd", JSON.parse(localStorage.getItem(`${addresses_arr[i].address}`)))
+
+      if (priceListItems[i].querySelector('span') === null) {
+        ////console.log('The parent element has a child div element.');
+        let relevant_element = priceListItems[i]
+
+        let span = document.createElement('span');
+        span = basicSpanStyling(span)
+        relevant_element.appendChild(span);
+        
+
+        let stored_address = JSON.parse(localStorage.getItem(`${addresses_arr[i].address}`));
+
+        if(stored_address){
+          createEligibilityDisplayTag(stored_address)
+        }
+        else{
+          span = setButtonStyle(span)
+          span.textContent = "Check Eligibility";
+  
+    
+    
+          span.addEventListener("click", (event) => {
+            span.textContent = "Loading..."
+            event.stopPropagation();
+            sendAllAddresses([addresses_arr[i]], i);
+          });
+        }
+      }
+
   }
-  deets_obj.address = document.querySelectorAll('.hiPLdz h1')[0].innerText;
-  // Replace non-breaking spaces with regular spaces
-  deets_obj.address = deets_obj.address.replace(/\u00A0/g, " ");
-  // Encode spaces for URL
-  deets_obj.url_address = deets_obj.address.replace(/ /g, "%20");
-  console.log("url address", deets_obj.url_address);
-  let details_response = await sendAddress(deets_obj.url_address);
+}
+
+function addCheckButton (relevant_element) {
+  let span = document.createElement('span');
+      
+  span = setButtonStyle(span)
+  span.textContent = "Check Eligibility";
+  relevant_element.appendChild(span);
   
-  // localStorage.setItem('deet', 'Obaseki Nosa');
+  return span;
+}
 
-  deets_obj.USDA_response = details_response;
 
+function createObjWithAddressValues(address_element_text){
+  let obj = {
+    address: "",
+    url_address: "", 
+    USDA_response: null,
+  }
+
+  obj.address = address_element_text;
+  // Replace non-breaking spaces with regular spaces
+  obj.address = obj.address.replace(/\u00A0/g, " ");
+  // Encode spaces for URL
+  obj.url_address = obj.address.replace(/ /g, "%20");
+  
+  return obj;
+}
+
+async function createDetailsObject (deets_obj){
+  console.log("element for deets obj", document.querySelectorAll('.hiPLdz h1'))
+  deets_obj = await addAndStoreResponse(deets_obj);
   createDetailsEligibility(deets_obj);
+}
+  
 
-  // Update the display for the current address
-  // createEligibilityDisplayTag(addresses[i], i + start_index);
+async function addAndStoreResponse (deets_obj) {
+  // console.log("url address", deets_obj.url_address);
+  deets_obj.USDA_response = await sendAddress(deets_obj.url_address);
+  localStorage.setItem(`${deets_obj.address}`, JSON.stringify(deets_obj));
+
+  return deets_obj;
 }
 
 function createDetailsEligibility (obj){
+  console.log("deets elly obj", obj)
   let span = document.querySelector(".deets_button")
-  console.log("deets eligibility func", span, obj)
+  span = eligibilityStyle(span);
+  // console.log("deets eligibility func", span, obj)
 
   if (span) {
     span.textContent = obj.USDA_response.eligibilityResult;
@@ -152,34 +225,17 @@ function createDetailsEligibility (obj){
 }
 
   function setButtonStyle (span) {
-    span.style.color = "white"
-    span.style.fontSize = "12px"
     span.style.backgroundColor = "grey"
-    span.style.marginLeft = "10px"
-    span.style.padding = "2px 5px 2px 5px"
-    span.style.borderRadius = "3px"
     span.style.cursor = "pointer"
-    span.border = "1px solid black"
-
+    span.style.border = "2px solid black"
     return span;
   }
-  
-  // Set the text content of the span to the eligibility information
-  // from the corresponding address in addresses_arr
-  ////console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
 
+  function eligibilityStyle (span) {
+    span.style.border = "0px solid white"
+    return span;
+  }
 
-
-  // Append the span element to the current list item
-  ////console.log("end of list items..", priceListItems[i + start_index])
- 
-
-
-
-  // // Select the specific <ul>
-  // const propertiesList = document.querySelector('.List-c11n-8-84-3__sc-1smrmqp-0'); // StyledSearchListWrapper-srp__sc-1ieen0c-0 doa-doM gKnRas photo-cards photo-cards_extra-attribution
-
-  // console.log("BEEP BOOP PROGRAM ACTIVATED", propertiesList);
 
   let is_initial_call = true;
 
@@ -203,7 +259,7 @@ function createDetailsEligibility (obj){
 
   function updateAddressesAndDisplayTagsInitial() {
     addresses_arr = setAddressesArray();
-    createLoadingDisplayTags(addresses_arr, 0);
+    createLoadingDisplayTags(addresses_arr);
     // addresses_arr = await 
     // sendAllAddresses(addresses_arr, 0);
     // createEligibilityDisplayTags(addresses_arr, 0);
@@ -215,9 +271,10 @@ function createDetailsEligibility (obj){
     for (let i = 0; i < addresses.length; i++) {
       let server_response = await sendAddress(addresses[i].url_address);
       addresses[i].USDA_response = server_response;//console.log(server_response)
+      localStorage.setItem(`${addresses[i].address}`, JSON.stringify(addresses[i]));
   
       // Update the display for the current address
-      createEligibilityDisplayTag(addresses[i], i + start_index);
+      createEligibilityDisplayTag(addresses[i]);
     }
   }
   
@@ -237,46 +294,11 @@ function createDetailsEligibility (obj){
     });
   }
 
-  function createLoadingDisplayTags(addresses_arr, start_index) {
-    // //console.log("addresses @ display func", addresses_arr.length, priceListItems.length, start_index);
-    for (let i = 0; i < addresses_arr.length; i++) {
-      // //console.log(i, i + start_index)
-      // Create a new span element to display the eligibility
 
-      if (priceListItems[i + start_index].querySelector('span') === null) {
-        ////console.log('The parent element has a child div element.');
-        let span = document.createElement('span');
-      
   
-        // Set the text content of the span to the eligibility information
-        // from the corresponding address in addresses_arr
-        ////console.log("alleged content of response", addresses_arr[i].USDA_response.eligibilityResult);
-        span.textContent = "Check Eligibility";
-        ////console.log("alleged content of span", span.textContent);
-        span.style.color = "white"
-        span.style.fontSize = "12px"
-        span.style.backgroundColor = "grey"
-        span.style.marginLeft = "10px"
-        span.style.padding = "2px 5px 2px 5px"
-        span.style.borderRadius = "3px"
+  function createEligibilityDisplayTag(address_object) {
+    console.log("list elly obj", address_object)
 
-    
-        // Append the span element to the current list item
-        ////console.log("end of list items..", priceListItems[i + start_index])
-        priceListItems[i + start_index].appendChild(span);
-
-        span.addEventListener("click", (event) => {
-          span.textContent = "Loading..."
-          event.stopPropagation();
-          sendAllAddresses([addresses_arr[i]], i + start_index);
-        });
-        
-      }
-
-    }
-  }
-  
-  function createEligibilityDisplayTag(address_object, index) {
     // console.log("USDA RESULT", address_object.USDA_response, listItems[index])
     for(let i = 0; i < addresses_arr.length; i ++){
       let USDA_address = address_object.address;
@@ -284,6 +306,8 @@ function createDetailsEligibility (obj){
       console.log("TO COMPARE", USDA_address, zillow_address)
       if(zillow_address === USDA_address){
         let span = priceListItems[i].querySelector('span');
+        span = eligibilityStyle(span);
+
         //console.log(span)
      
          if (span) {
@@ -304,14 +328,15 @@ function createDetailsEligibility (obj){
     let returned_addresses_array = [];
    //console.log("length of list", listItems.length)
     for(let i = 0; i < listItems.length; i++){
-      let addresses_obj = {
-        address: "",
-        url_address: "", 
-        USDA_response: null,
-      }
-      addresses_obj.address = listItems[i].innerHTML;
-      addresses_obj.url_address = addresses_obj.address.replace(/ /g, "%20");
-      returned_addresses_array.push(addresses_obj);
+      let address_obj = createObjWithAddressValues(listItems[i].innerHTML)
+      // let addresses_obj = {
+      //   address: "",
+      //   url_address: "", 
+      //   USDA_response: null,
+      // }
+      // addresses_obj.address = listItems[i].innerHTML;
+      // addresses_obj.url_address = addresses_obj.address.replace(/ /g, "%20");
+      returned_addresses_array.push(address_obj);
     }
     return returned_addresses_array;
   }
@@ -355,7 +380,7 @@ const throttledScroll = throttle(function() {
     
 }, 200); // Trigger at most once every 200ms (1/5th of a second)
 
-async function updateAddressesAndDisplayScroll() {
+function updateAddressesAndDisplayScroll() {
   let old_array_length = addresses_arr.length;
   let new_array = setAddressesArray(); //array for slicing
   if(new_array.length > old_array_length){
@@ -363,7 +388,7 @@ async function updateAddressesAndDisplayScroll() {
     ////console.log("THE ARRAYS", addresses_arr, new_array, sliced_array)
     // addresses_arr.concat(sliced_array);
     addresses_arr = new_array;
-    createLoadingDisplayTags(addresses_arr, 0);
+    createLoadingDisplayTags(addresses_arr);
     // sliced_array = await 
 
     // sendAllAddresses(sliced_array, old_array_length);
@@ -386,23 +411,6 @@ async function updateAddressesAndDisplayScroll() {
   //   // Your function code here
   //  //console.log('Properties being scrolled');
   // });
- 
-
-
-  // let url_start = "https://eligibility.sc.egov.usda.gov/eligibility/MapAddressVerification?address="
-  // // 370%20boyer%20rd
-  // let url_end = "&whichapp=RBSIELG"
-  // // zillow_search_button.onclick 
-  // check_eligibility();
-  // function check_eligibility() {
-  //   // let url_search_str = search_str.replaceAll(" ", "%20");
-
-  //   // // URL of the page you want to fetch
-  //   // url_search_str = "370%20boyer%20rd"
-  //   // const url = url_start + url_search_str + url_end;
-
-  //   // console.log(url)
-  //   // // alert(`clicking the search ${url}`)
 
 
 

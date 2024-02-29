@@ -4,6 +4,7 @@
   "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when searching homes on Zillow...",
   "version": "1.0",
   "permissions": [
+    "webNavigation",
     "webRequest"
   ],
   "host_permissions": [

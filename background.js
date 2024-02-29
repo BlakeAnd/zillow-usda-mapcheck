@@ -6,7 +6,7 @@ chrome.runtime.onMessage.addListener(
       fetch(url)
         .then(response => response.text())
         .then(data => sendResponse({data: data}))
-        .catch(error => console.error('Error:', error));
+        .catch(error => sendResponse({error: error}));
       return true; // Keep the messaging channel open for async response
     }
   }
@@ -24,3 +24,17 @@ chrome.runtime.onMessage.addListener(
 //   },
 //   { urls: ['<all_urls>'] }
 // );
+
+  chrome.webNavigation.onHistoryStateUpdated.addListener(function(details) {
+    console.log('Page uses history.pushState or history.replaceState.');
+    // consoke.log
+    if((details.url.includes("https://www.zillow.com") && details.url.includes("?searchQueryState=")) || details.url.includes("https://www.zillow.com/homes/")){
+      chrome.tabs.sendMessage(details.tabId, {action: "urlChanged"})
+    }
+    else if(details.url.includes("https://www.zillow.com/homedetails/")){
+      chrome.tabs.sendMessage(details.tabId, {action: "urlChanged"})
+    }
+    else if(details.url.includes("https://www.zillow.com/myzillow/favorites")){
+      chrome.tabs.sendMessage(details.tabId, {action: "urlChanged"})     
+    }
+  }, {url: [{urlMatches : 'https://www.zillow.com/*'}]});

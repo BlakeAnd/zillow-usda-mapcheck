@@ -14,25 +14,23 @@ function main () {
   let listItems = null;
   let is_initial_call = true;
   let addresses_arr = [];
-      let list_items_selector = ".ListItem-c11n-8-84-3__sc-10e22w8-0 address"
-      let favedAddressesSelector = '.list-card-addr';
 
-      let favedPricesSelector = 'list-card-price';
-      let searchPricesSelector = "PropertyCardWrapper__StyledPriceLine-srp__sc-16e8gqd-1 iMKTKr"
-      let priceListItems = null;
+  let list_items_selector = ".ListItem-c11n-8-84-3__sc-10e22w8-0 address"
+  let favedAddressesSelector = '.list-card-addr'
+  let favedPricesSelector = 'list-card-price';
+  let searchPricesSelector = "#grid-search-results ul:nth-of-type(1) li div div article div div div:nth-of-type(2)  div span"
+  //
 
-      let favedListPriceItems = document.querySelectorAll(favedPricesSelector);
 
-  document.addEventListener("click", (event) => {
-    // checkURL();
-  })
+  let priceListItems = null;
 
+  let favedListPriceItems = document.querySelectorAll(favedPricesSelector);
 
   function awaitDOM(price_selector, selector, listItems) {
   
     const intervalId = setInterval(function() {
+      // const secondDivs = document.querySelectorAll('#grid-earch-results ul:nth-of-type(1) li div div article div div div:nth-of-type(2) div span');
 
-      listItems = document.querySelectorAll(selector);
 
       if (listItems && listItems.length > 0) {
         // console.log("awaited dom", listItems, price_selector)
@@ -45,6 +43,10 @@ function main () {
         }
 
         clearInterval(intervalId); // Clear the interval once the elements are found
+      }
+      else{
+  
+        listItems = document.querySelectorAll(selector);
       }
     }, 250); // Fires 4 times per second
     
@@ -59,7 +61,7 @@ function main () {
     // Create a callback function that has access to elementName
     const callback = function(mutationsList, observer) {
         for (const mutation of mutationsList) {
-          startAll(); 
+          startAll();  
         }
         
     };
@@ -156,17 +158,20 @@ function basicSpanStyling (span) {
 }
 
 function createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
-  // console.log("at list loading", addresses_arr, listItems)
-  priceListItems = document.getElementsByClassName(price_selector)
+  priceListItems = document.querySelectorAll(price_selector)
+  console.log("at list loading", price_selector, priceListItems)
+
   for (let i = 0; i < addresses_arr.length; i++) {
-      if (priceListItems[i].querySelector('span') === null) {
+      console.log("loaing loop", priceListItems[i], priceListItems[i].querySelector("elly"), priceListItems[i].getElementsByTagName("elly"))
+
+      if (priceListItems[i].querySelector("elly") === null) {
 
         let relevant_element = priceListItems[i]
 
-        let span = document.createElement('span');
+        let span = document.createElement('elly');
+        // span.setAttribute("class", "eligibility-button")
         span = basicSpanStyling(span)
         relevant_element.appendChild(span);
-        
 
         let stored_address = JSON.parse(localStorage.getItem(`${addresses_arr[i].address}`));
 
@@ -186,8 +191,6 @@ function createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
           makeListButton(price_selector, addresses_arr, span, i, listItems)
         }
       }
-
-
   }
 }
 
@@ -312,6 +315,8 @@ function createDetailsEligibility (result){
 
   function startAll () {
     if((window.location.href.includes("https://www.zillow.com") && window.location.href.includes("?searchQueryState=")) || window.location.href.includes("https://www.zillow.com/homes/")){
+
+        // runList(searchPricesSelector, list_items_selector, listItems)
         awaitDOM(searchPricesSelector, list_items_selector, listItems);
     }
     else if(window.location.href.includes("https://www.zillow.com/homedetails")){
@@ -319,12 +324,16 @@ function createDetailsEligibility (result){
     }
     else if(window.location.href.includes("https://www.zillow.com/myzillow/favorites")){
       // updateAddressesAndDisplayTagsInitial(list_items_selector);
+      // runList(favedPricesSelector, favedAddressesSelector, listItems)
       awaitDOM(favedPricesSelector, favedAddressesSelector, listItems)
     }
 
   }
-
   startAll()
+
+  async function runList (pricesSelector, list_items_selector, listItems) {
+    await asyncAwaitDOM()
+  }
 
   function updateAddressesAndDisplayTagsInitial(price_selector, list_items_selector, listItems) {
     addresses_arr = setAddressesArray(list_items_selector);
@@ -335,6 +344,7 @@ function createDetailsEligibility (result){
 
   
   async function sendAllAddresses(price_selector, addresses, listItems) {
+    console.log("at send all", listItems)
     for (let i = 0; i < addresses.length; i++) {
       try{
 
@@ -382,13 +392,14 @@ function createDetailsEligibility (result){
 
   
   function createEligibilityDisplayTag(price_selector, address, response, listItems) {
+    console.log("at display tags", listItems) 
     for(let i = 0; i < addresses_arr.length; i ++){
       let USDA_address = address;
       let zillow_address = listItems[i].textContent;
       console.log("TO COMPARE", USDA_address, zillow_address)
       if(zillow_address === USDA_address){
-        priceListItems = document.getElementsByClassName(price_selector);
-        let span = priceListItems[i].querySelector('span');
+        priceListItems = document.querySelectorAll(price_selector);
+        let span = priceListItems[i].querySelector('elly');
         span = eligibilityStyle(span);
 
         //console.log(span)
@@ -451,7 +462,7 @@ const throttledScroll = throttle(function() {
 }, 200); // Trigger at most once every 200ms (1/5th of a second)
 
 function updateAddressesAndDisplayScroll(price_selector, selector, listItems) {
-  console.log("update on scroll fired")
+  console.log("update on scroll fired", price_selector, listItems)
   // let old_array_length = addresses_arr.length;
   let new_array = setAddressesArray(selector); //array for slicing
   // if(new_array.length > old_array_length){

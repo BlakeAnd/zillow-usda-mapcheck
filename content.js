@@ -4,7 +4,7 @@ window.addEventListener('load', function () {
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action == "urlChanged") {
-      console.log("URL changed");
+      // console.log("URL changed");
       main()
   }
 });
@@ -15,45 +15,32 @@ function main () {
   let is_initial_call = true;
   let addresses_arr = [];
 
-  let list_items_selector = ".ListItem-c11n-8-84-3__sc-10e22w8-0 address"
+  let list_items_selector = "#grid-search-results address"
+  // ".ListItem-c11n-8-84-3__sc-10e22w8-0 address"
   let favedAddressesSelector = '.list-card-addr'
-  let favedPricesSelector = 'list-card-price';
+  let favedPricesSelector = '.list-card-price';
   let searchPricesSelector = "#grid-search-results ul:nth-of-type(1) li div div article div div div:nth-of-type(2)  div span"
   //
-
-
   let priceListItems = null;
 
-  let favedListPriceItems = document.querySelectorAll(favedPricesSelector);
+  // let favedListPriceItems = document.querySelectorAll(favedPricesSelector);
 
-  function awaitDOM(price_selector, selector, listItems) {
-  
-    const intervalId = setInterval(function() {
-      // const secondDivs = document.querySelectorAll('#grid-earch-results ul:nth-of-type(1) li div div article div div div:nth-of-type(2) div span');
-
-
-      if (listItems && listItems.length > 0) {
-        // console.log("awaited dom", listItems, price_selector)
-        if(is_initial_call === true){
-          is_initial_call = false;
-          updateAddressesAndDisplayTagsInitial(price_selector, selector, listItems);
+  function awaitDOM(selector) {
+    return new Promise((resolve, reject) => {
+      const intervalId = setInterval(() => {
+        const listItems = document.querySelectorAll(selector);
+        if (listItems && listItems.length > 0) {
+          clearInterval(intervalId);
+          resolve(listItems); // Resolve the promise with the listItems
         }
-        else{
-          updateAddressesAndDisplayScroll(price_selector, selector, listItems)
-        }
-
-        clearInterval(intervalId); // Clear the interval once the elements are found
-      }
-      else{
+      }, 250); // Fires 4 times per second
   
-        listItems = document.querySelectorAll(selector);
-      }
-    }, 250); // Fires 4 times per second
-    
-    // Set a timeout to clear the interval after 8 seconds
-    setTimeout(() => {
-      clearInterval(intervalId);
-    }, 12000);
+      // Set a timeout to clear the interval and reject the promise after 12 seconds
+      setTimeout(() => {
+        clearInterval(intervalId);
+        reject(new Error('Timeout waiting for DOM elements'));
+      }, 12000);
+    });
   }
 
   function createObserver(element, elementName) {
@@ -90,7 +77,9 @@ if (propertiesGrid) {
 
 function createDetailsButton() {
   const intervalId = setInterval(function() {
-    let price_span = document.getElementsByClassName("Text-c11n-8-99-3__sc-aiai24-0 Price__StyledHeading-fs-hdp__sc-1me8eh6-0 iDpxGV fbhNY")[0];
+    let price_span_old = document.getElementsByClassName("Text-c11n-8-99-3__sc-aiai24-0 Price__StyledHeading-fs-hdp__sc-1me8eh6-0 iDpxGV fbhNY")[0];
+    let price_span = document.querySelector(".layout-static-column-container div div div:nth-of-type(2) div div div div div div div span span")
+    // console.log("deets button time", price_span, price_spa)
 
     if (price_span) {
       let deets_obj = createObjWithAddressValues(document.querySelectorAll('.hiPLdz h1')[0].textContent)
@@ -159,10 +148,10 @@ function basicSpanStyling (span) {
 
 function createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
   priceListItems = document.querySelectorAll(price_selector)
-  console.log("at list loading", price_selector, priceListItems)
+  // console.log("at list loading", price_selector, priceListItems)
 
   for (let i = 0; i < addresses_arr.length; i++) {
-      console.log("loaing loop", priceListItems[i], priceListItems[i].querySelector("elly"), priceListItems[i].getElementsByTagName("elly"))
+      // console.log("loaing loop", priceListItems[i], priceListItems[i].querySelector("elly"), priceListItems[i].getElementsByTagName("elly"))
 
       if (priceListItems[i].querySelector("elly") === null) {
 
@@ -260,7 +249,7 @@ function createObjWithAddressValues(address_element_text){
 async function createDetailsObject (deets_obj){
   try{
     deets_obj = await addAndStoreResponse(deets_obj);
-    console.log("deets res obj", deets_obj);
+    // console.log("deets res obj", deets_obj);
     if(deets_obj.USDA_response.eligibilityResult){
       localStorage.setItem(`${deets_obj.address}`, JSON.stringify(deets_obj));
       createDetailsEligibility(deets_obj.USDA_response.eligibilityResult);
@@ -316,41 +305,67 @@ function createDetailsEligibility (result){
   function startAll () {
     if((window.location.href.includes("https://www.zillow.com") && window.location.href.includes("?searchQueryState=")) || window.location.href.includes("https://www.zillow.com/homes/")){
 
-        // runList(searchPricesSelector, list_items_selector, listItems)
-        awaitDOM(searchPricesSelector, list_items_selector, listItems);
+        runList(searchPricesSelector, list_items_selector, listItems)
+        // awaitDOM(searchPricesSelector, list_items_selector, listItems);
     }
     else if(window.location.href.includes("https://www.zillow.com/homedetails")){
       createDetailsButton();
     }
     else if(window.location.href.includes("https://www.zillow.com/myzillow/favorites")){
       // updateAddressesAndDisplayTagsInitial(list_items_selector);
-      // runList(favedPricesSelector, favedAddressesSelector, listItems)
-      awaitDOM(favedPricesSelector, favedAddressesSelector, listItems)
+      runList(favedPricesSelector, favedAddressesSelector, listItems)
+      // awaitDOM(favedPricesSelector, favedAddressesSelector, listItems)
     }
 
   }
   startAll()
 
-  async function runList (pricesSelector, list_items_selector, listItems) {
-    await asyncAwaitDOM()
+  async function runList(price_selector, list_items_selector) {
+    try {
+      const listItems = await awaitDOM(list_items_selector);
+      if (is_initial_call === true) {
+        is_initial_call = false;
+        let addresses_arr = updateAddressesAndDisplayTagsInitial(price_selector, list_items_selector, listItems);
+        createLoadingDisplayTags(price_selector, addresses_arr, listItems);
+
+      } else {
+        updateAddressesAndDisplayScroll(price_selector, list_items_selector, listItems);
+      }
+    } catch (error) {
+      // console.error('Error waiting for DOM elements:', error);
+      // Handle the error as needed
+    }
+  }
+  
+
+  async function runListold (pricesSelector, list_items_selector, listItems) {
+    listItems = await awaitDOM(pricesSelector, list_items_selector, listItems)
+    if(is_initial_call === true){
+      is_initial_call = false;
+      updateAddressesAndDisplayTagsInitial(price_selector, selector, listItems);
+    }
+    else{
+      updateAddressesAndDisplayScroll(price_selector, selector, listItems)
+    }
   }
 
   function updateAddressesAndDisplayTagsInitial(price_selector, list_items_selector, listItems) {
     addresses_arr = setAddressesArray(list_items_selector);
-    createLoadingDisplayTags(price_selector, addresses_arr, listItems);
+    return addresses_arr;
 
   }
   
 
   
   async function sendAllAddresses(price_selector, addresses, listItems) {
-    console.log("at send all", listItems)
+    // console.log("at send all", listItems, addresses)
     for (let i = 0; i < addresses.length; i++) {
       try{
-
+    // console.log("at send all", addresses[i].url_address)
         let server_response = await sendAddress(addresses[i].url_address);
         if(server_response.eligibilityResult){
           addresses[i].USDA_response = server_response;
+          // console.log("res at send all", server_response)
           localStorage.setItem(`${addresses[i].address}`, JSON.stringify(addresses[i]));
   
           // Update the display for the current address
@@ -380,7 +395,10 @@ function createDetailsEligibility (result){
         }, response => {
             clearTimeout(timeoutId); // Clear the timeout if a response is received
             if (response) {
+              // console.log("response at send add", response)
                 let eligibility_response = JSON.parse(response.data);
+              // console.log("response at send add", eligibility_response)
+
                 resolve(eligibility_response);
             } else {
                 reject(new Error("No response from server"));
@@ -389,16 +407,17 @@ function createDetailsEligibility (result){
     });
   }
 
-
   
   function createEligibilityDisplayTag(price_selector, address, response, listItems) {
-    console.log("at display tags", listItems) 
+    //differnt lengths, addresses_are bigger, fix this
+    // console.log("at display tags", address, response, listItems[0].textContent, addresses_arr.length, listItems.length) 
     for(let i = 0; i < addresses_arr.length; i ++){
       let USDA_address = address;
       let zillow_address = listItems[i].textContent;
-      console.log("TO COMPARE", USDA_address, zillow_address)
+      // console.log("TO COMPARE", USDA_address, zillow_address)
       if(zillow_address === USDA_address){
         priceListItems = document.querySelectorAll(price_selector);
+        // console.log("display price list", priceListItems)
         let span = priceListItems[i].querySelector('elly');
         span = eligibilityStyle(span);
 
@@ -462,7 +481,7 @@ const throttledScroll = throttle(function() {
 }, 200); // Trigger at most once every 200ms (1/5th of a second)
 
 function updateAddressesAndDisplayScroll(price_selector, selector, listItems) {
-  console.log("update on scroll fired", price_selector, listItems)
+  // console.log("update on scroll fired", price_selector, listItems)
   // let old_array_length = addresses_arr.length;
   let new_array = setAddressesArray(selector); //array for slicing
   // if(new_array.length > old_array_length){

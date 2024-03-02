@@ -1,16 +1,26 @@
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
+    console.log("request", request);
     if (request.action == "checkEligibility") {
       const url = `https://eligibility.sc.egov.usda.gov/eligibility/MapAddressVerification?address=${request.address}&whichapp=SFHMFS`;
-      // https://eligibility.sc.egov.usda.gov/eligibility/MapAddressVerification?address=575%20SW%20G%20St,%20Grants%20Pass,%20OR%2097526&whichapp=SFHMFS
       fetch(url)
-        .then(response => response.text())
-        .then(data => sendResponse({data: data}))
-        .catch(error => sendResponse({error: error}));
+        .then(response => {
+          console.log("response", response); // Log the response object
+          return response.text(); // Return the text of the response to chain the promise
+        })
+        .then(data => {
+          console.log("data", data); // Log the data
+          sendResponse({data: data});
+        })
+        .catch(error => {
+          console.log("error", error); // Log the error
+          sendResponse({error: error});
+        });
       return true; // Keep the messaging channel open for async response
     }
   }
 );
+
 
 // let lastFrameId = -1;
 

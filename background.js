@@ -7,10 +7,10 @@ chrome.runtime.onMessage.addListener(
         .then(response => response.text())
         .then(data => {
           // Simulate a delay by using setTimeout
-          setTimeout(() => {
+          // setTimeout(() => {
             console.log("data", data); // Log the data
             sendResponse({data: data});
-          }, 4000); // Delay of 4 seconds
+          // }, 4000); // Delay of 4 seconds
         })
         .catch(error => {
           console.log("error", error); // Log the error

@@ -27,6 +27,19 @@ function main () {
 
   // let favedListPriceItems = document.querySelectorAll(favedPricesSelector);
 
+  // makeAboutButton()
+  // function makeAboutButton(){
+  //   let about_button = document.querySelector("usda_button");
+  //   if(!about_button){
+  //     about_button = document.createElement("usda_button");
+  //     let nav = document.querySelector("[data-zg-section='user']")
+  //     console.log("nav", nav)
+  //     about_button.textContent = "USDA Eligibility Checker"
+  //     nav.parentElement.appendChild(about_button)
+  //     about_button.marginLeft = "15px"
+  //   }
+  // }
+
   function awaitDOM(selector) {
     return new Promise((resolve, reject) => {
       const intervalId = setInterval(() => {
@@ -112,8 +125,8 @@ function createDetailsButton(price_selector_deets, selector_deets) {
             createDetailsEligibility(stored_obj.USDA_response.eligibilityResult, stored_obj.id_address)
           }
           else{
-            stored_obj.time_updated = new Date();
-            localStorage.setItem(`${stored_obj.address}`, JSON.stringify(stored_obj))
+            // stored_obj.time_updated = new Date();
+            // localStorage.setItem(`${stored_obj.address}`, JSON.stringify(stored_obj))
             makeDetailsPageButton(span, deets_obj)
           }
         }
@@ -157,51 +170,6 @@ function basicSpanStyling (span) {
   return span;
 }
 
-function old_createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
-  console.log("at loading display from initial")
-  priceListItems = document.querySelectorAll(price_selector)
-  // console.log("at list loading", price_selector, priceListItems)
-
-  for (let i = 0; i < addresses_arr.length; i++) {
-      // console.log("loaing loop", priceListItems[i], priceListItems[i].querySelector("elly"), priceListItems[i].getElementsByTagName("elly"))
-
-      let relevant_element = priceListItems[i]
-      let span = null;
-
-      //make basic span...
-      //look for stored data
-      //if new stored data, set eligibility
-      //if old data, update and
-
-      
-
-      if (priceListItems[i].querySelector("elly") === null) {
-        span = document.createElement('elly');
-        span.setAttribute("id", addresses_arr[i].id_address)
-        span = basicSpanStyling(span)
-        relevant_element.appendChild(span);
-
-        let stored_address = JSON.parse(localStorage.getItem(`${addresses_arr[i].address}`));
-
-        if(stored_address){
-          let stored_date = new Date(stored_address.time_updated)
-          let under_week_old = isLessThanAWeekOld(stored_date)
-          if(under_week_old){
-            createEligibilityDisplayTag(price_selector, stored_address.id_address, stored_address.USDA_response.eligibilityResult, listItems)
-          }
-          else{
-            stored_address.time_updated = new Date();
-            localStorage.setItem(`${stored_address.address}`, JSON.stringify(stored_address))
-            makeListButton(price_selector, addresses_arr, span, i, listItems)
-          }
-        }
-        else{
-          makeListButton(price_selector, addresses_arr, span, i, listItems)
-        }
-      }
-  }
-}
-
 function createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
   console.log("at loading display from initial")
   priceListItems = document.querySelectorAll(price_selector)
@@ -234,8 +202,8 @@ function createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
             createEligibilityDisplayTag(price_selector, stored_address.id_address, stored_address.USDA_response.eligibilityResult, listItems)
           }
           else{
-            stored_address.time_updated = new Date();
-            localStorage.setItem(`${stored_address.address}`, JSON.stringify(stored_address))
+            // stored_address.time_updated = new Date();
+            // localStorage.setItem(`${stored_address.address}`, JSON.stringify(stored_address))
             makeListButton(price_selector, addresses_arr, span, i, listItems)
           }
         }
@@ -251,13 +219,13 @@ function createLoadingDisplayTags(price_selector, addresses_arr, listItems) {
           if(under_week_old && span.textContent !== stored_address.USDA_response.eligbility){
             createEligibilityDisplayTag(price_selector, stored_address.id_address, stored_address.USDA_response.eligibilityResult, listItems)
           }
-          else{
-            stored_address.time_updated = new Date();
-            localStorage.setItem(`${stored_address.address}`, JSON.stringify(stored_address))
+          else if(span.textContent == stored_address.USDA_response.eligbility){
+            // stored_address.time_updated = new Date();
+            // localStorage.setItem(`${stored_address.address}`, JSON.stringify(stored_address))
             makeListButton(price_selector, addresses_arr, span, i, listItems)
           }
         }
-        // else{
+        // else if(span.textContent !== "Check Eligibility"){
         //   makeListButton(price_selector, addresses_arr, span, i, listItems)
         // }
       }
@@ -291,13 +259,13 @@ function isLessThanAWeekOld(stored_date) {
   // const givenDate = new Date(dateString);
   const currentDate = new Date();
   const differenceInDays = (currentDate - stored_date) / (1000 * 60 * 60 * 24);
-  // console.log("week old", stored_date, currentDate, differenceInDays)
-
-  if (differenceInDays < 7) {
+  // console.log("week old", stored_date, currentDate, differenceInDays) 
+  if (differenceInDays < 180) {
     // console.log("The date is less than a week old.");
     // You can fire your function here
     return true;
-  } else {
+  } 
+  else {
     // console.log("The date is past the last week.");
     return false;
   }

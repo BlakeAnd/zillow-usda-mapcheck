@@ -4,12 +4,10 @@
   "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when searching homes on Zillow...",
   "version": "1.0",
   "permissions": [
-    "webNavigation",
-    "webRequest"
+    "webNavigation"
   ],
   "host_permissions": [
-    "https://eligibility.sc.egov.usda.gov/*",
-    "<all_urls>"
+    "https://eligibility.sc.egov.usda.gov/*"
   ],
   "background": {
     "service_worker": "background.js"

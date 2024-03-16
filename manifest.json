@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Zillow USDA Direct Checker",
-  "description": "Checks the USDA Direct eligibility map to see if a home is in an accepted area when searching homes on Zillow...",
+  "name": "Zillow USDA Loan Eligibility Checker",
+  "description": "Quickly check if homes on Zillow are in eligible locations for USDA loans while browsing.",
   "version": "1.0",
   "permissions": [
     "webNavigation"
